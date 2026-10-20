@@ -1,0 +1,110 @@
+services:
+  student-db:
+    image: postgres:15
+    container_name: student-db
+    environment:
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: students
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-net
+  
+  student-profile:
+      build: ./student-profile
+      container_name: student-profile
+      environment:
+        DATABASE_URL: postgresql://student:password@student-db:5432/students
+        FLASK_ENV: development
+      depends_on:
+        - student-db
+      ports:
+        - "5001:5001"
+      networks:
+        - microservices-net
+
+  course-db:
+    image: postgres:15
+    container_name: course-db
+    environment:
+      POSTGRES_USER: courseuser
+      POSTGRES_PASSWORD: coursepass
+      POSTGRES_DB: coursesdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./course-catalogue/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-net
+  
+  course-catalogue:
+    build: ./course-catalogue
+    container_name: course-catalogue
+    environment:
+      DATABASE_URL: postgresql://courseuser:coursepass@course-db:5432/coursesdb
+    depends_on:
+      - course-db
+    ports:
+      - "5002:5002"
+    networks:
+      - microservices-net
+
+  notification:
+    build: ./notification
+    container_name: notification
+    ports:
+      - "5003:5003"
+    networks:
+      - microservices-net
+
+  feedback-db:
+    image: postgres:15
+    container_name: feedback-db
+    environment:
+      POSTGRES_USER: feedbackuser
+      POSTGRES_PASSWORD: feedbackpass
+      POSTGRES_DB: feedbackdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./feedback/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-net
+
+  feedback:
+    build: ./feedback
+    container_name: feedback
+    environment:
+      DATABASE_URL: postgresql://feedbackuser:feedbackpass@feedback-db:5432/feedbackdb
+    depends_on:
+      - feedback-db
+      - student-profile
+      - course-catalogue
+      - notification
+    ports:
+      - "5004:5004"
+    networks:
+      - microservices-net
+
+
+  admin-frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - student-profile
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge

@@ -1,0 +1,226 @@
+/* === General Page Styles === */
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f5f5; /* surface */
+  margin: 0;
+  padding: 0;
+  color: #212121; /* text */
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #ffffff; /* bg */
+}
+
+/* === Headings === */
+h1 {
+  margin-bottom: 8px;
+  color: #ff5722; /* primary */
+}
+
+h2 {
+  margin-top: 0;
+  color: #ff5722; /* primary */
+}
+
+/* === Paragraphs === */
+p {
+  opacity: 0.8;
+  color: #616161; /* muted */
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* === Card Sections === */
+.card {
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #ffffff; /* bg */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* === Grid Layouts === */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.grid-gap {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #ffffff; /* bg */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.justify-end {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+/* === Tabs Headings === */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 10px 18px;
+  font-size: 15px;
+  cursor: pointer;
+  color: #616161;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: #1565c0;
+}
+
+.tab-active {
+  color: #1565c0;
+  font-weight: bold;
+  border-bottom-color: #1565c0;
+}
+
+/* === Inputs & Selects === */
+input, select {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  border: 1px solid #f5f5f5; /* surface */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* === Buttons === */
+button {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: box-shadow 0.2s ease;
+}
+
+button:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+  background-color: #ff5722;
+  color: #fff;
+}
+
+.btn-secondary {
+  background-color: #009688;
+  color: #fff;
+}
+
+.btn-danger {
+  background-color: #8b0019ff;
+  color: #fff;
+}
+
+/* === Attendance Collapse === */
+details summary {
+  cursor: pointer;
+  color: #009688; /* secondary */
+  outline: none;
+}
+
+/* === Course Grid === */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.course-heading {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: #212121
+}
+
+.course-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-code {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #1565c0;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.course-title {
+  font-weight: bold;
+  color: #212121;
+}
+
+.course-credits {
+  font-size: 13px;
+  color: #616161;
+}
+
+.course-admin {
+  margin-bottom: 24px;
+}
+
+/* === Notifications Section === */
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.notif-item {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid #1565c0;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.notif-to {
+  font-size: 13px;
+  color: #616161;
+  margin-bottom: 4px;
+}
+
+/* === Feedback Section === */
+.fb-msg {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.fb-ok  { background: #e8f5e9; color: #2e7d32; }
+.fb-err { background: #ffebee; color: #c62828; }
+
