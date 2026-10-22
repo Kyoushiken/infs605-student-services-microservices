@@ -1,21 +1,19 @@
 # Student Services Dashboard
 
-A microservices prototype of a student services dashboard for INFS605 Assessment 2. Four small Flask services run in separate Docker containers, each with its own data, and are started together with Docker Compose. A React admin portal ties them together.
+This is my INFS605 Assessment 2 project. It is a small student services dashboard built from four Flask services, each running in its own Docker container and started together with Docker Compose. A React page lets you use all of them.
 
-**Student:** [Your name], [Your Student ID]
-**Course:** INFS605 Microservices, Assessment 2
 
-## Architecture
+## How it works
 
 ```mermaid
 flowchart LR
-    Browser["React admin portal<br/>:3000"]
+    Browser["React page :3000"]
 
-    subgraph Docker network: microservices-net
-        SP["student-profile<br/>:5001"]
-        CC["course-catalogue<br/>:5002"]
-        FB["feedback<br/>:5004"]
-        NT["notification<br/>:5003"]
+    subgraph Docker network
+        SP["student-profile :5001"]
+        CC["course-catalogue :5002"]
+        FB["feedback :5004"]
+        NT["notification :5003"]
 
         SDB[("student-db")]
         CDB[("course-db")]
@@ -27,187 +25,146 @@ flowchart LR
     Browser --> FB
     Browser --> NT
 
-    FB -- "1. GET /students/id" --> SP
-    FB -- "2. GET /courses/id" --> CC
-    FB -- "3. POST /notify" --> NT
+    FB -->|"1. GET /students/id"| SP
+    FB -->|"2. GET /courses/id"| CC
+    FB -->|"3. POST /notify"| NT
 
     SP --> SDB
     CC --> CDB
     FB --> FDB
 ```
 
-Each service owns its own database. No service reads another service's tables. The only way to get another service's data is through its API.
+Each service has its own database and never reads another service's tables. If a service needs someone else's data, it asks that service's API.
 
-### What happens when feedback is submitted
+When someone submits feedback, the Feedback service does this:
 
-1. The browser sends `POST /feedback` to the Feedback service.
-2. Feedback asks Student Profile whether the student exists. If not, it returns 404.
-3. Feedback asks Course Catalogue whether the course exists. If not, it returns 404.
-4. Feedback saves the record in its own database. It stores only the student and course ids.
-5. Feedback calls Notification, which logs a mock email to the student's address.
-6. If Student Profile or Course Catalogue cannot be reached, Feedback returns 503. If only Notification is down, the feedback is still saved and the response says `notification_sent: false`.
+1. Checks the student exists by calling Student Profile (404 if not).
+2. Checks the course exists by calling Course Catalogue (404 if not).
+3. Saves the feedback in its own database. It only stores the student and course ids.
+4. Calls Notification, which logs a fake email to the student.
+
+If Student Profile or Course Catalogue is down, Feedback returns 503. If only Notification is down, the feedback is still saved and the response says `notification_sent: false`.
 
 ## Services
 
-| Service | Port | Database | Purpose |
+| Service | Port | Database | What it does |
 |---|---|---|---|
-| student-profile | 5001 | student-db (PostgreSQL) | Student records and attendance |
-| course-catalogue | 5002 | course-db (PostgreSQL) | Course list and details |
-| feedback | 5004 | feedback-db (PostgreSQL) | Course feedback from students |
-| notification | 5003 | none (in memory) | Mock email service that logs messages |
-| admin-frontend | 3000 | none | React portal with a tab for each service |
+| student-profile | 5001 | PostgreSQL | Students and their attendance |
+| course-catalogue | 5002 | PostgreSQL | List of courses |
+| feedback | 5004 | PostgreSQL | Feedback students leave on courses |
+| notification | 5003 | None (kept in memory) | Logs mock emails |
+| frontend | 3000 | None | React page with a tab for each service |
 
-## Technologies
+Built with Docker Compose, Python 3.11 and Flask, PostgreSQL 15, and React (Vite).
 
-Docker and Docker Compose, Python 3.11 with Flask, PostgreSQL 15, React, Git.
-
-## Directory structure
+## Folder structure
 
 ```
 [StudentID]-assignment2/
   docker-compose.yml
-  README.md
-  .gitignore
   .env.example
-  postgres/
-    init.sql
-  student-profile/
-    app.py
-    Dockerfile
-    requirements.txt
-    wait-for-it.sh
-  course-catalogue/
-    app.py
-    Dockerfile
-    requirements.txt
-    wait-for-it.sh
-    init.sql
-  feedback/
-    app.py
-    Dockerfile
-    requirements.txt
-    init.sql
-  notification/
-    app.py
-    Dockerfile
-    requirements.txt
-  frontend/
-    src/
-      App.jsx
-      Courses.jsx
-      Feedback.jsx
-      Notifications.jsx
-      index.css
+  .gitignore
+  .gitattributes
+  README.md
+  postgres/init.sql
+  student-profile/    app.py, Dockerfile, requirements.txt, wait-for-it.sh
+  course-catalogue/   app.py, Dockerfile, requirements.txt, wait-for-it.sh, init.sql
+  feedback/           app.py, Dockerfile, requirements.txt, init.sql
+  notification/       app.py, Dockerfile, requirements.txt
+  frontend/           Dockerfile, package.json, vite.config.js, src/
+  screenshots/
+  postman/
 ```
 
-## Setup
+## How to run it
 
-You need Docker Desktop (or Docker Engine with the Compose plugin). Make sure it is running first.
+You need Docker Desktop running.
 
-1. Unzip the project and open a terminal in the project folder.
-2. Start everything:
-```
-   docker compose up --build
-```
-3. Wait until all containers are running. Check with `docker compose ps`.
-4. Open the admin portal at http://localhost:3000.
+1. Open a terminal in the project folder.
+2. Copy `.env.example` to `.env` (`copy .env.example .env` on Windows). The default values work as they are.
+3. Run `docker compose up --build`.
+4. Check everything is up with `docker compose ps`.
+5. Open http://localhost:3000.
 
-To stop the system, press Ctrl+C or run `docker compose down`. To reset all databases to their starting data, run `docker compose down -v` and then `docker compose up --build`.
+The first build can take 5 to 10 minutes because the frontend packages have to download. Later builds are quick.
 
-If port 5432 is already in use on your machine, change the left-hand number of the `student-db` ports line in `docker-compose.yml`. Containers talk to each other on the internal port, so nothing else needs to change.
+To stop it, run `docker compose down`. Data is kept in Docker volumes, so it is still there next time. To wipe the data and start again, run `docker compose down -v`.
+
+If port 5432 is already used on your computer, change the left-hand number in the `student-db` ports line. The services talk to each other inside Docker, so nothing else needs changing.
 
 ## API endpoints
 
-### student-profile (http://localhost:5001)
+**student-profile (localhost:5001)**
 
-| Method | Path | Description |
+| Method | Path | What it does |
 |---|---|---|
-| GET | `/` | Service check message |
-| GET | `/students` | List all students |
-| GET | `/students/<id>` | Get one student, 404 if missing |
-| POST | `/students` | Create a student (`name`, `email`) |
-| PUT | `/students/<id>` | Update a student |
-| DELETE | `/students/<id>` | Delete a student |
-| POST | `/students/<id>/attendance` | Record attendance (`date`, `status`) |
+| GET | /students | List students |
+| GET | /students/id | Get one student |
+| POST | /students | Add a student (name, email) |
+| PUT | /students/id | Update a student |
+| DELETE | /students/id | Delete a student |
+| POST | /students/id/attendance | Record attendance (date, status) |
 
-### course-catalogue (http://localhost:5002)
+**course-catalogue (localhost:5002)**
 
-| Method | Path | Description |
+| Method | Path | What it does |
 |---|---|---|
-| GET | `/courses` | List all courses |
-| GET | `/courses/<id>` | Get one course, 404 if missing |
-| POST | `/courses` | Create a course (`code`, `title`, `credits`) |
-| GET | `/health` | Health check, 503 if the database is down |
+| GET | /courses | List courses |
+| GET | /courses/id | Get one course |
+| POST | /courses | Add a course (code, title, credits) |
+| GET | /health | Check the service and its database |
 
-### feedback (http://localhost:5004)
+**feedback (localhost:5004)**
 
-| Method | Path | Description |
+| Method | Path | What it does |
 |---|---|---|
-| GET | `/feedback` | List all feedback, newest first |
-| POST | `/feedback` | Submit feedback (`student_id`, `course_id`, `rating` 1 to 5, `comment`) |
-| GET | `/health` | Health check, 503 if the database is down |
+| GET | /feedback | List feedback, newest first |
+| POST | /feedback | Add feedback (student_id, course_id, rating 1 to 5, comment) |
+| GET | /health | Check the service and its database |
 
-### notification (http://localhost:5003)
+**notification (localhost:5003)**
 
-| Method | Path | Description |
+| Method | Path | What it does |
 |---|---|---|
-| POST | `/notify` | Send a mock email (`to`, `message`), logs it and stores it |
-| GET | `/notifications` | List the notifications sent so far |
-| GET | `/health` | Health check |
+| POST | /notify | Send a mock email (to, message) |
+| GET | /notifications | List the emails sent so far |
+| GET | /health | Check the service |
 
-## Logging and error handling
+## Logging and errors
 
-Each service logs to the container output with its own name in the log line. View a service's log with `docker compose logs <service>`, for example `docker compose logs feedback`.
+Each service writes logs with its own name in every line. To read them, run `docker compose logs <service>`, for example `docker compose logs feedback`.
 
-Errors return JSON with a clear message and a suitable status code: 400 for missing or invalid fields, 404 when a student or course does not exist, 409 for a duplicate course code, 502 when another service returns an unexpected error, and 503 when a required service is unreachable.
+Errors come back as JSON with a message. The status codes I used are 400 (missing or bad input), 404 (student or course not found), 409 (duplicate course code), 502 (another service sent back an error) and 503 (another service is down).
 
 ## Testing
 
-The React portal is the front-end for demonstrating the services. These acceptance tests can be run through it or against the APIs directly.
+I tested through the React page and with Postman. The Postman collection is in the `postman/` folder, and you can load it with Import in Postman.
 
-| # | Test | Expected result |
+| # | What I did | What should happen |
 |---|---|---|
-| 1 | Open the Students tab | Seeded students are listed |
-| 2 | Open the Courses tab | Seeded courses are shown as cards |
-| 3 | Submit feedback for a valid student and course | 201, green success message, record appears in the feedback list |
-| 4 | Open the Notifications tab after test 3 | A new message addressed to that student's email |
-| 5 | Submit feedback with a course id that does not exist | 404 "Course not found" |
-| 6 | Submit feedback with a student id that does not exist | 404 "Student not found" |
-| 7 | Submit feedback with a missing field | 400 with the field name |
-| 8 | Run `docker compose stop course-catalogue`, then submit feedback | 503 "Course service unavailable" |
-| 9 | Run `docker compose stop notification`, then submit feedback | Feedback saved, `notification_sent` is false |
-| 10 | Add a course with a code that already exists | 409 "Course code already exists" |
+| 1 | Opened the Students and Courses tabs | Seed data is shown |
+| 2 | Submitted feedback for a real student and course | 201, and it appears in the list |
+| 3 | Opened the Notifications tab | A new message for that student's email |
+| 4 | Used a course id that does not exist | 404 Course not found |
+| 5 | Used a student id that does not exist | 404 Student not found |
+| 6 | Left out the comment | 400 |
+| 7 | Stopped course-catalogue, then submitted feedback | 503 |
+| 8 | Stopped notification, then submitted feedback | Saved, `notification_sent` is false |
+| 9 | Added a course with a code that already exists | 409 |
+| 10 | Ran `docker compose down` then `up` again | The feedback is still there |
 
-Example request:
+Example:
 
 ```
-curl -X POST http://localhost:5004/feedback \
-  -H "Content-Type: application/json" \
-  -d '{"student_id":1,"course_id":1,"rating":5,"comment":"Great course"}'
+curl -X POST http://localhost:5004/feedback -H "Content-Type: application/json" -d '{"student_id":1,"course_id":1,"rating":5,"comment":"Great course"}'
 ```
 
-## Screenshots
+Screenshots of these are in the `screenshots/` folder.
 
-Screenshots are in the `screenshots/` folder.
+## Problems I ran into
 
-- [ ] `docker compose ps` with all containers running
-- [ ] Each portal tab (Students, Courses, Feedback, Notifications)
-- [ ] A feedback submission and the matching notification
-- [ ] The 503 error case with Course Catalogue stopped
-- [ ] Logs showing a saved feedback record
-
-## Development issues and fixes
-
-- **Database table was never created.** A trailing comma in `init.sql` caused a syntax error, so Postgres skipped the file and left an empty database. PostgreSQL only runs `init.sql` on a new data volume, so the fix was to correct the file and run `docker compose down -v`.
-- **Copied services waited for the wrong database.** The Dockerfile copied from student-profile waited for `student-db`. Course Catalogue now waits for `course-db`, and Notification and Feedback no longer wait for a database they do not use.
-- **Port already in use.** Port 5432 was taken on the host machine, so `student-db` failed to start. The host port was changed. Containers still use 5432 on the internal network.
-- **Misleading SQL error.** A missing space between two joined query strings produced `column "id" does not exist`. The fix was to add the space before `FROM`.
-- **Frontend called the wrong service.** The Feedback form used port 5003 (Notification) instead of 5004. The browser reported this as a CORS error, but the real cause was the wrong port.
-- **Services must use service names, not localhost.** Inside Docker, Feedback reaches other services at addresses like `http://student-profile:5001`.
-
-## Known limitations
-
-- Notifications are held in memory and are cleared when the Notification container restarts.
-- Credentials are set directly in `docker-compose.yml` for this prototype. A production system would use secrets.
-- The Flask development server is used. A production setup would use a WSGI server such as gunicorn.
-- There is no authentication.
+- **A table was missing.** A trailing comma in `init.sql` broke the script, so Postgres started with an empty database. Postgres only runs `init.sql` the first time a volume is created, so I fixed the file and ran `docker compose down -v`.
+- **Wrong wait host.** I copied student-profile's Dockerfile for the other services, and it waited for `student-db`. I changed each one to wait for its own database.
+- **Port 5432 was taken.** `student-db` would not start, so I changed the host port. Inside Docker it still uses 5432.
+- **A confusing SQL error.** A missing space between two joined strings in a query gave me `column "id" does not exist`. I added the space before `FROM`.
+- **Wrong port in the frontend.** The feedback form was calling port 5003 (Notification) instead of 5004. The browser showed a CORS error, but the real problem was the port.

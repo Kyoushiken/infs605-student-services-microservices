@@ -3,48 +3,50 @@ services:
     image: postgres:15
     container_name: student-db
     environment:
-      POSTGRES_USER: student
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: students
+      POSTGRES_USER: ${STUDENT_DB_USER:-student}
+      POSTGRES_PASSWORD: ${STUDENT_DB_PASSWORD:-password}
+      POSTGRES_DB: ${STUDENT_DB_NAME:-students}
     ports:
       - "5432:5432"
     volumes:
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - student_data:/var/lib/postgresql/data
     networks:
       - microservices-net
-  
+
   student-profile:
-      build: ./student-profile
-      container_name: student-profile
-      environment:
-        DATABASE_URL: postgresql://student:password@student-db:5432/students
-        FLASK_ENV: development
-      depends_on:
-        - student-db
-      ports:
-        - "5001:5001"
-      networks:
-        - microservices-net
+    build: ./student-profile
+    container_name: student-profile
+    environment:
+      DATABASE_URL: postgresql://${STUDENT_DB_USER:-student}:${STUDENT_DB_PASSWORD:-password}@student-db:5432/${STUDENT_DB_NAME:-students}
+      FLASK_ENV: development
+    depends_on:
+      - student-db
+    ports:
+      - "5001:5001"
+    networks:
+      - microservices-net
 
   course-db:
     image: postgres:15
     container_name: course-db
     environment:
-      POSTGRES_USER: courseuser
-      POSTGRES_PASSWORD: coursepass
-      POSTGRES_DB: coursesdb
+      POSTGRES_USER: ${COURSE_DB_USER:-courseuser}
+      POSTGRES_PASSWORD: ${COURSE_DB_PASSWORD:-coursepass}
+      POSTGRES_DB: ${COURSE_DB_NAME:-coursesdb}
     ports:
       - "5433:5432"
     volumes:
       - ./course-catalogue/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - course_data:/var/lib/postgresql/data
     networks:
       - microservices-net
-  
+
   course-catalogue:
     build: ./course-catalogue
     container_name: course-catalogue
     environment:
-      DATABASE_URL: postgresql://courseuser:coursepass@course-db:5432/coursesdb
+      DATABASE_URL: postgresql://${COURSE_DB_USER:-courseuser}:${COURSE_DB_PASSWORD:-coursepass}@course-db:5432/${COURSE_DB_NAME:-coursesdb}
     depends_on:
       - course-db
     ports:
@@ -64,13 +66,14 @@ services:
     image: postgres:15
     container_name: feedback-db
     environment:
-      POSTGRES_USER: feedbackuser
-      POSTGRES_PASSWORD: feedbackpass
-      POSTGRES_DB: feedbackdb
+      POSTGRES_USER: ${FEEDBACK_DB_USER:-feedbackuser}
+      POSTGRES_PASSWORD: ${FEEDBACK_DB_PASSWORD:-feedbackpass}
+      POSTGRES_DB: ${FEEDBACK_DB_NAME:-feedbackdb}
     ports:
       - "5434:5432"
     volumes:
       - ./feedback/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - feedback_data:/var/lib/postgresql/data
     networks:
       - microservices-net
 
@@ -78,7 +81,7 @@ services:
     build: ./feedback
     container_name: feedback
     environment:
-      DATABASE_URL: postgresql://feedbackuser:feedbackpass@feedback-db:5432/feedbackdb
+      DATABASE_URL: postgresql://${FEEDBACK_DB_USER:-feedbackuser}:${FEEDBACK_DB_PASSWORD:-feedbackpass}@feedback-db:5432/${FEEDBACK_DB_NAME:-feedbackdb}
     depends_on:
       - feedback-db
       - student-profile
@@ -88,7 +91,6 @@ services:
       - "5004:5004"
     networks:
       - microservices-net
-
 
   admin-frontend:
     build: ./frontend
@@ -104,6 +106,11 @@ services:
       - student-profile
     networks:
       - microservices-net
+
+volumes:
+  student_data:
+  course_data:
+  feedback_data:
 
 networks:
   microservices-net:
