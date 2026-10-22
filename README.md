@@ -138,7 +138,7 @@ Errors come back as JSON with a message. The status codes I used are 400 (missin
 
 ## Testing
 
-I tested through the React page and with Postman. The Postman collection is in the `postman/` folder, and you can load it with Import in Postman.
+I tested through the React page.
 
 | # | What I did | What should happen |
 |---|---|---|
@@ -153,13 +153,6 @@ I tested through the React page and with Postman. The Postman collection is in t
 | 9 | Added a course with a code that already exists | 409 |
 | 10 | Ran `docker compose down` then `up` again | The feedback is still there |
 
-Example:
-
-```
-curl -X POST http://localhost:5004/feedback -H "Content-Type: application/json" -d '{"student_id":1,"course_id":1,"rating":5,"comment":"Great course"}'
-```
-
-Screenshots of these are in the `screenshots/` folder.
 
 ## Problems I ran into
 
